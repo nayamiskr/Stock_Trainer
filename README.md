@@ -1,6 +1,6 @@
 # stock_game
 
-A new Flutter project.
+如果不會玩股票可以玩這個練習
 
 ## Getting Started
 
