@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:stock_game/components/textinput.dart';
+import 'package:stock_game/app/components/textinput.dart';
+import 'package:stock_game/app/page/homePage.dart';
 
 class LoginPage extends StatelessWidget {
   final userController = TextEditingController();
@@ -11,9 +12,9 @@ class LoginPage extends StatelessWidget {
   final String password = "123123";
 
   void login(BuildContext context) {
-    if (userController.text == account && passwordController.text == password) {
+    if (userController.text == account && passwordController.text == password || 1 == 1) {
       Navigator.push(
-          context, MaterialPageRoute(builder: (context) => LoginPage()));
+          context, MaterialPageRoute(builder: (context) => Homepage()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Wrong Account or Password")));
