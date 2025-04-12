@@ -7,7 +7,8 @@ import 'package:stock_game/app/page/stockGraph.dart';
 
 int budget = 100000;
 String stockCode = '';
-DateTime dateTime = DateTime(2023, 1, 1);
+DateTime startDateTime = DateTime(2023, 1, 1);
+DateTime endDateTime = DateTime(2023, 3, 1);
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -57,11 +58,12 @@ class _HomepageState extends State<Homepage> {
               ),
               //choose date
               SizedBox(
-                height: 120,
+                height: 200,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Text('請選擇日期', style: TextStyle(fontSize: 20)),
+                    Text('請選擇開始日期', style: TextStyle(fontSize: 20)),
+                    //start date
                     SizedBox(
                       height: 50,
                       width: 300,
@@ -73,23 +75,53 @@ class _HomepageState extends State<Homepage> {
                               showTitleActions: true,
                               onConfirm: (date) {
                                 setState(() {
-                                  dateTime = date;
+                                  startDateTime = date;
                                 });
                               },
-                              currentTime: dateTime,
+                              currentTime: startDateTime,
                               locale: LocaleType.zh,
                             );
                           },
                           child: Text(
-                            DateFormat("yyyy-MM-dd").format(dateTime),
+                            DateFormat("yyyy-MM-dd").format(startDateTime),
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text('請選擇結束日期', style: TextStyle(fontSize: 20)),
+                    //end date
+                    SizedBox(
+                      height: 50,
+                      width: 300,
+                      child: ButtonTheme(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            datatTimePicker.DatePicker.showDatePicker(
+                              context,
+                              showTitleActions: true,
+                              onConfirm: (date) {
+                                setState(() {
+                                  endDateTime = date;
+                                });
+                              },
+                              currentTime: endDateTime,
+                              locale: LocaleType.zh,
+                            );
+                          },
+                          child: Text(
+                            DateFormat("yyyy-MM-dd").format(endDateTime),
                             style: TextStyle(fontSize: 16),
                           ),
                         ),
                       ),
                     ),
                   ],
+
+                  
                 ),
               ),
+              
               //start button
               SizedBox(
                 height: 50,
@@ -98,7 +130,7 @@ class _HomepageState extends State<Homepage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Stockgraph()),
+                      MaterialPageRoute(builder: (context) => Stockgraph(startDT: startDateTime, endDT: endDateTime, budget: budget,)),
                     );
                   },
                   child: Text('開始遊戲', style: TextStyle(fontSize: 20)),

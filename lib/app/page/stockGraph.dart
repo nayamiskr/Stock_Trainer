@@ -3,9 +3,14 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
+import 'package:stock_game/app/page/homePage.dart';
 
 class Stockgraph extends StatefulWidget {
-  const Stockgraph({super.key});
+  const Stockgraph({super.key, required this.startDT, required this.endDT, required this.budget});
+
+  final DateTime startDT;
+  final DateTime endDT;
+  final int budget;
 
   @override
   State<Stockgraph> createState() => _StockgraphState();
@@ -14,16 +19,19 @@ class Stockgraph extends StatefulWidget {
 class _StockgraphState extends State<Stockgraph> {
   List<CandleData> _candles = [];
   String stockCode = '';
+  late DateTime _endDateTime;
 
   @override
   void initState() {
     super.initState();
-    fetchStockData(stockCode);
+    _endDateTime = widget.endDT;
   }
 
   Future<void> fetchStockData(String symbol) async {
+    final startTimestamp = widget.startDT.millisecondsSinceEpoch ~/ 1000;
+    final endTimestamp = _endDateTime.millisecondsSinceEpoch ~/ 1000;
     final url = Uri.parse(
-      'https://query1.finance.yahoo.com/v8/finance/chart/$symbol?interval=1d&range=3mo',
+      'https://query1.finance.yahoo.com/v8/finance/chart/$symbol?interval=1d&period1=$startTimestamp&period2=$endTimestamp&events=history&includeAdjustedClose=true',
     );
 
     final response = await http.get(url);
@@ -55,7 +63,6 @@ class _StockgraphState extends State<Stockgraph> {
           ),
         );
       }
-
       setState(() {
         _candles = candles;
       });
@@ -101,23 +108,36 @@ class _StockgraphState extends State<Stockgraph> {
                 ],
               ),
             ),
-            Text(
-              'Stock Code: ${stockCode}',
-              style: const TextStyle(fontSize: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text(
+                  'Stock Code: ${stockCode}',
+                  style: const TextStyle(fontSize: 24),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward_sharp),
+                  onPressed: () async {
+                    setState(() {
+                      _endDateTime = _endDateTime.add(Duration(days: 1));
+                    });
+                    await fetchStockData(stockCode);
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+            // 顯示Ｋ線圖
             SizedBox(
               width: 400,
               height: 400,
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child:
-                    _candles.isEmpty
-                        ? const Center(child: Text('No data available'))
-                        : InteractiveChart(candles: _candles),
+                child: _candles.isNotEmpty
+                    ? InteractiveChart(key: ValueKey(_candles.length), candles: _candles)
+                    : const Center(child: Text('No data available')),
               ),
             ),
-
+            // 顯示買進金額和張數的輸入框
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -126,7 +146,7 @@ class _StockgraphState extends State<Stockgraph> {
                   child: TextField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: "買入金額",
+                      hintText: "買進金額",
                     ),
                   ),
                 ),
@@ -135,7 +155,7 @@ class _StockgraphState extends State<Stockgraph> {
                   child: TextField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: "賣出金額",
+                      hintText: "買進張數",
                     ),
                   ),
                 ),
