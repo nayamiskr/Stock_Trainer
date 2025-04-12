@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
-import 'package:stock_game/app/page/homePage.dart';
 
 class Stockgraph extends StatefulWidget {
   const Stockgraph({super.key, required this.startDT, required this.endDT, required this.budget});
@@ -11,7 +9,7 @@ class Stockgraph extends StatefulWidget {
   final DateTime startDT;
   final DateTime endDT;
   final int budget;
-
+   
   @override
   State<Stockgraph> createState() => _StockgraphState();
 }
@@ -19,6 +17,8 @@ class Stockgraph extends StatefulWidget {
 class _StockgraphState extends State<Stockgraph> {
   List<CandleData> _candles = [];
   String stockCode = '';
+  double buyPrice = 0;
+  int buyAmount = 0;
   late DateTime _endDateTime;
 
   @override
@@ -148,6 +148,16 @@ class _StockgraphState extends State<Stockgraph> {
                       border: OutlineInputBorder(),
                       hintText: "買進金額",
                     ),
+                    onChanged: (text) {
+                        buyPrice = double.tryParse(text) ?? 0;
+                        if (buyPrice * buyAmount > widget.budget) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('超過預算！'),
+                            ),
+                          );
+                        }
+                      },
                   ),
                 ),
                 SizedBox(
@@ -157,6 +167,16 @@ class _StockgraphState extends State<Stockgraph> {
                       border: OutlineInputBorder(),
                       hintText: "買進張數",
                     ),
+                    onChanged: (text) {
+                        buyAmount = int.tryParse(text) ?? 0;
+                        if (buyPrice * buyAmount > widget.budget) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('超過預算！'),
+                            ),
+                          );
+                        }
+                      },
                   ),
                 ),
               ],
