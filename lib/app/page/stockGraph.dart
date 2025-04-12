@@ -1,12 +1,11 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 
 class Stockgraph extends StatefulWidget {
-  const Stockgraph({super.key, required this.stockCode});
-
-  final String stockCode;
+  const Stockgraph({super.key});
 
   @override
   State<Stockgraph> createState() => _StockgraphState();
@@ -14,11 +13,12 @@ class Stockgraph extends StatefulWidget {
 
 class _StockgraphState extends State<Stockgraph> {
   List<CandleData> _candles = [];
+  String stockCode = '';
 
   @override
   void initState() {
     super.initState();
-    fetchStockData(widget.stockCode);
+    fetchStockData(stockCode);
   }
 
   Future<void> fetchStockData(String symbol) async {
@@ -41,7 +41,8 @@ class _StockgraphState extends State<Stockgraph> {
 
       List<CandleData> candles = [];
       for (int i = 0; i < timestamps.length; i++) {
-        if ([opens[i], highs[i], lows[i], closes[i], volumes[i]].contains(null)) continue;
+        if ([opens[i], highs[i], lows[i], closes[i], volumes[i]].contains(null))
+          continue;
 
         candles.add(
           CandleData(
@@ -66,13 +67,81 @@ class _StockgraphState extends State<Stockgraph> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("股票趨勢圖 ${widget.stockCode}")),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: InteractiveChart(
-            candles: _candles,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 200,
+              width: 200,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: '請輸入股票代碼',
+                    ),
+                    onChanged: (text) {
+                      stockCode = text;
+                    },
+                  ),
+                  SizedBox(
+                    height: 50,
+                    width: 200,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (stockCode.isNotEmpty) {
+                          await fetchStockData(stockCode);
+                        }
+                      },
+                      child: Text('查詢', style: TextStyle(fontSize: 20)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              'Stock Code: ${stockCode}',
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 400,
+              height: 400,
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child:
+                    _candles.isEmpty
+                        ? const Center(child: Text('No data available'))
+                        : InteractiveChart(candles: _candles),
+              ),
+            ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(
+                  width: 150,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "買入金額",
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 150,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "賣出金額",
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

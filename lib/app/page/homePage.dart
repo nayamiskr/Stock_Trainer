@@ -90,42 +90,17 @@ class _HomepageState extends State<Homepage> {
                   ],
                 ),
               ),
-              //stock code search bar
-              SizedBox(
-                height: 200,
-                width: 350,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: '請輸入股票代碼',
-                      ),
-                      onChanged: (text) {
-                        stockCode = text;
-                      },
-                    ),
-                    SizedBox(
-                      height: 50,
-                      width: 200,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => Stockgraph(stockCode: stockCode,)));
-                        },
-                        child: Text('查詢', style: TextStyle(fontSize: 20)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               //start button
               SizedBox(
                 height: 50,
                 width: 200,
                 child: ElevatedButton(
-
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Stockgraph()),
+                    );
+                  },
                   child: Text('開始遊戲', style: TextStyle(fontSize: 20)),
                 ),
               ), //startButton
