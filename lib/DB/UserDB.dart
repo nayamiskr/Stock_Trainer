@@ -23,7 +23,7 @@ class Userdb {
       join(await getDatabasesPath(), 'user.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE user(id TEXT PRIMARY KEY, name TEXT, account TEXT, password TEXT)',
+          'CREATE TABLE user(id INTEGER PRIMARY KEY , name TEXT, account TEXT, password TEXT)',
         );
       },
       version: 1,

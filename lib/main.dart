@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:stock_game/DB/UserDB.dart';
 import 'app/page/login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await deleteDatabase(join(await getDatabasesPath(), 'user.db'));
   await Userdb.initDB();
   await Userdb.getAllUsers();
   print("hello");

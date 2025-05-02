@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:stock_game/DB/UserDB.dart';
 import 'package:stock_game/app/page/homePage.dart';
 import 'package:stock_game/app/components/textinput.dart';
-import 'package:uuid/uuid.dart';
 
 class LoginPage extends StatelessWidget {
   final userController = TextEditingController();

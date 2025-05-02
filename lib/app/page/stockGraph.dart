@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
+import 'package:stock_game/DB/StockDb.dart';
 
 class Stockgraph extends StatefulWidget {
   const Stockgraph({
@@ -198,6 +199,7 @@ class _StockgraphState extends State<Stockgraph> {
                         ScaffoldMessenger.of(
                           context,
                         ).showSnackBar(SnackBar(content: Text('買進成功！')));
+                        StockDb.insertStock(stock(code: stockCode, userId: widget.userId, price: buyPrice, amount: buyAmount));
                       } else {
                         ScaffoldMessenger.of(
                           context,
@@ -218,7 +220,8 @@ class _StockgraphState extends State<Stockgraph> {
                       if (buyPrice * buyAmount <= widget.budget) {
                         ScaffoldMessenger.of(
                           context,
-                        ).showSnackBar(SnackBar(content: Text('買進成功！')));
+                        ).showSnackBar(SnackBar(content: Text('賣出成功！')));
+                        StockDb.getAllStocks(widget.userId);
                       } else {
                         ScaffoldMessenger.of(
                           context,
