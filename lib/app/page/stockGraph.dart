@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 
 class Stockgraph extends StatefulWidget {
-  const Stockgraph({super.key, required this.startDT, required this.endDT, required this.budget});
+  const Stockgraph({
+    super.key,
+    required this.startDT,
+    required this.endDT,
+    required this.budget,
+  });
 
   final DateTime startDT;
   final DateTime endDT;
   final int budget;
-   
+
   @override
   State<Stockgraph> createState() => _StockgraphState();
 }
@@ -78,6 +83,7 @@ class _StockgraphState extends State<Stockgraph> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            //輸入股票代碼
             SizedBox(
               height: 200,
               width: 200,
@@ -108,6 +114,7 @@ class _StockgraphState extends State<Stockgraph> {
                 ],
               ),
             ),
+            //顯示股票代碼跟調整日期
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -132,9 +139,13 @@ class _StockgraphState extends State<Stockgraph> {
               height: 400,
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child: _candles.isNotEmpty
-                    ? InteractiveChart(key: ValueKey(_candles.length), candles: _candles)
-                    : const Center(child: Text('No data available')),
+                child:
+                    _candles.isNotEmpty
+                        ? InteractiveChart(
+                          key: ValueKey(_candles.length),
+                          candles: _candles,
+                        )
+                        : const Center(child: Text('No data available')),
               ),
             ),
             // 顯示買進金額和張數的輸入框
@@ -146,18 +157,11 @@ class _StockgraphState extends State<Stockgraph> {
                   child: TextField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: "買進金額",
+                      hintText: "金額",
                     ),
                     onChanged: (text) {
-                        buyPrice = double.tryParse(text) ?? 0;
-                        if (buyPrice * buyAmount > widget.budget) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('超過預算！'),
-                            ),
-                          );
-                        }
-                      },
+                      buyPrice = double.tryParse(text) ?? 0;
+                    },
                   ),
                 ),
                 SizedBox(
@@ -165,18 +169,61 @@ class _StockgraphState extends State<Stockgraph> {
                   child: TextField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: "買進張數",
+                      hintText: "張數",
                     ),
                     onChanged: (text) {
-                        buyAmount = int.tryParse(text) ?? 0;
-                        if (buyPrice * buyAmount > widget.budget) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('超過預算！'),
-                            ),
-                          );
-                        }
-                      },
+                      buyAmount = int.tryParse(text) ?? 0;
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 10),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(
+                  height: 50,
+                  width: 150,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    onPressed: () {
+                      if (buyPrice * buyAmount <= widget.budget) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('買進成功！')));
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('超過預算！')));
+                      }
+                    },
+                    child: Text('買進', style: TextStyle(fontSize: 20, color: Colors.white), ),
+                  ),
+                ),
+                SizedBox(
+                  height: 50,
+                  width: 150,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    onPressed: () {
+                      if (buyPrice * buyAmount <= widget.budget) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('買進成功！')));
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('超過預算！')));
+                      }
+                    },
+                    child: Text('賣出', style: TextStyle(fontSize: 20, color: Colors.white), ),
                   ),
                 ),
               ],

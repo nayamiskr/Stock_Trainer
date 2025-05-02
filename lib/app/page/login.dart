@@ -1,22 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:stock_game/DB/UserDB.dart';
 import 'package:stock_game/app/page/homePage.dart';
 import 'package:stock_game/app/components/textinput.dart';
+import 'package:uuid/uuid.dart';
 
 class LoginPage extends StatelessWidget {
   final userController = TextEditingController();
   final passwordController = TextEditingController();
+  final dbFuture = Userdb.getDbConnect();
 
   LoginPage({super.key});
 
-  final String account = "hello";
-  final String password = "123123";
+  Future<User?> Auth(String account, String password) async {
+    final db = await dbFuture;
+    final List<Map<String, dynamic>> userData = await db.query(
+      'user',
+      where: 'account = ? AND password = ?',
+      whereArgs: [account, password],
+    );
+    if (userData.isNotEmpty) {
+      final user = userData.first;
+      return User(
+        id: user['id'],
+        name: user['name'],
+        account: user['account'],
+        password: user['password'],
+      );
+    }
+    return null;
+  }
 
-  void login(BuildContext context) {
-    if (userController.text == account && passwordController.text == password ||
-        1 == 1) {
+  Future<void> login(BuildContext context) async {
+    final user = await Auth(userController.text, passwordController.text);
+    if (user != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => Homepage()),
+        MaterialPageRoute(builder: (context) => Homepage(currentUser: user)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +97,14 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    dbFuture.then((db) => Userdb.insertUser(User(
+                          id: "2",
+                          name: userController.text,
+                          account: userController.text,
+                          password: passwordController.text)));
+                    dbFuture.then((db) => Userdb.getAllUsers());
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     margin: const EdgeInsets.symmetric(horizontal: 30),

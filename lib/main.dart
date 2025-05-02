@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:stock_game/DB/UserDB.dart';
 import 'app/page/login.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Userdb.initDB();
+  await Userdb.getAllUsers();
+  print("hello");
   runApp(const MyApp());
 }
 

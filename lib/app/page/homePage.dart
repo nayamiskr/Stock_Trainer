@@ -3,16 +3,18 @@ import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart'
     as datatTimePicker;
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:stock_game/DB/UserDB.dart';
 import 'package:stock_game/app/page/stockGraph.dart';
 
 int budget = 100000;
 String stockCode = '';
+final db = Userdb.getDbConnect();
 DateTime startDateTime = DateTime(2023, 1, 1);
 DateTime endDateTime = DateTime(2023, 3, 1);
 
 class Homepage extends StatefulWidget {
-  const Homepage({super.key});
-
+  const Homepage({super.key, required this.currentUser});
+  final User currentUser;
   @override
   State<Homepage> createState() => _HomepageState();
 }
@@ -29,7 +31,7 @@ class _HomepageState extends State<Homepage> {
             children: [
               //title
               Text(
-                '歡迎遊玩股票學習系統',
+                '你好${widget.currentUser.name}\n歡迎遊玩股票學習系統',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               //show your budget
@@ -43,7 +45,7 @@ class _HomepageState extends State<Homepage> {
                         padding: EdgeInsets.all(10),
                         child: Text.rich(
                           TextSpan(
-                            text: '你目前的資產: ',
+                            text: '${widget.currentUser.name}目前的資產: ',
                             style: TextStyle(fontSize: 20),
                           ),
                         ),
