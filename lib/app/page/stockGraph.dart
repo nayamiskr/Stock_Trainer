@@ -9,11 +9,13 @@ class Stockgraph extends StatefulWidget {
     required this.startDT,
     required this.endDT,
     required this.budget,
+    required this.userId,
   });
 
   final DateTime startDT;
   final DateTime endDT;
   final int budget;
+  final int userId;
 
   @override
   State<Stockgraph> createState() => _StockgraphState();

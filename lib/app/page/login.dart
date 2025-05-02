@@ -99,7 +99,7 @@ class LoginPage extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     dbFuture.then((db) => Userdb.insertUser(User(
-                          id: "2",
+                          id: 1,
                           name: userController.text,
                           account: userController.text,
                           password: passwordController.text)));

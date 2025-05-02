@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class User {
-  final String id;
+  final int id;
   final String name;
   final String account;
   final String password;

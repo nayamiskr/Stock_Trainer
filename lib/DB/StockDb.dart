@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 class stock {
   final String code;
-  final String userId;
+  final int userId;
   final double price;
   final int volume;
 

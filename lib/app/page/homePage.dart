@@ -8,7 +8,6 @@ import 'package:stock_game/app/page/stockGraph.dart';
 
 int budget = 100000;
 String stockCode = '';
-final db = Userdb.getDbConnect();
 DateTime startDateTime = DateTime(2023, 1, 1);
 DateTime endDateTime = DateTime(2023, 3, 1);
 
@@ -132,7 +131,7 @@ class _HomepageState extends State<Homepage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Stockgraph(startDT: startDateTime, endDT: endDateTime, budget: budget,)),
+                      MaterialPageRoute(builder: (context) => Stockgraph(startDT: startDateTime, endDT: endDateTime, budget: budget, userId: widget.currentUser.id)),
                     );
                   },
                   child: Text('開始遊戲', style: TextStyle(fontSize: 20)),
