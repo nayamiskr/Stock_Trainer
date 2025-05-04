@@ -1,13 +1,15 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-class stock {
+class Stock {
+  final int? orderId;
   final String code;
   final int userId;
   final double price;
   final int amount;
 
-  stock({
+  Stock({
+    this.orderId,
     required this.code,
     required this.userId,
     required this.price,
@@ -24,10 +26,11 @@ class StockDb {
       onCreate: (db, version) {
         return db.execute(
           'CREATE TABLE stock('
+          'orderId INTEGER PRIMARY KEY AUTOINCREMENT, '
           'code TEXT, '
           'userId TEXT, '
           'price REAL, '
-          'volume INTEGER, '
+          'amount INTEGER, '
           'FOREIGN KEY(userId) REFERENCES user(id))'
         );
       },
@@ -41,7 +44,7 @@ class StockDb {
     return await initDB();
   }
 
-  static Future<void> insertStock(stock stock) async {
+  static Future<void> insertStock(Stock stock) async {
     final db = await getDbConnect();
     await db.insert(
       'stock',
@@ -55,19 +58,14 @@ class StockDb {
     );
   }
 
-  static Future<List<stock>> getAllStocks(int userId) async {
+  static Future<void> getAllStocks(int userId) async {
     final db = await getDbConnect();
     final List<Map<String, dynamic>> stocks = await db.query(
       'stock',
-      where: 'userId = ?',
-      whereArgs: [userId], 
     );
 
-    return stocks.map((e) => stock(
-    code: e['code'],
-    userId: int.parse(e['userId']),
-    price: e['price'],
-    amount: e['amount'],
-  )).toList();// Replace with the actual userId);
+    for (var stock in stocks) {
+      print('OrderId: ${stock['orderId']}, Code: ${stock['code']}, UserId: ${stock['userId']}, Price: ${stock['price']}, Amount: ${stock['amount']}');
+    }
   }
 }
