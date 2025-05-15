@@ -27,16 +27,18 @@ class _StockgraphState extends State<Stockgraph> {
   String stockCode = '';
   double buyPrice = 0;
   int buyAmount = 0;
+  late DateTime _startDateTime;
   late DateTime _endDateTime;
 
   @override
   void initState() {
     super.initState();
-    _endDateTime = widget.endDT;
+    _startDateTime = widget.startDT.subtract(Duration(days: 30));
+    _endDateTime = widget.startDT;
   }
 
   Future<void> fetchStockData(String symbol) async {
-    final startTimestamp = widget.startDT.millisecondsSinceEpoch ~/ 1000;
+    final startTimestamp = _startDateTime.millisecondsSinceEpoch ~/ 1000;
     final endTimestamp = _endDateTime.millisecondsSinceEpoch ~/ 1000;
     final url = Uri.parse(
       'https://query1.finance.yahoo.com/v8/finance/chart/$symbol?interval=1d&period1=$startTimestamp&period2=$endTimestamp&events=history&includeAdjustedClose=true',
@@ -89,7 +91,7 @@ class _StockgraphState extends State<Stockgraph> {
             //顯示預算
             Text.rich(
               TextSpan(
-                text: '預算: ',
+                text: '餘額: ',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -153,6 +155,7 @@ class _StockgraphState extends State<Stockgraph> {
                   onPressed: () async {
                     setState(() {
                       _endDateTime = _endDateTime.add(Duration(days: 1));
+                      _startDateTime = _startDateTime.add(Duration(days: 1));
                     });
                     await fetchStockData(stockCode);
                   },
@@ -170,6 +173,10 @@ class _StockgraphState extends State<Stockgraph> {
                         ? InteractiveChart(
                           key: ValueKey(_candles.length),
                           candles: _candles,
+                          style: ChartStyle(
+                            priceGainColor: Colors.red,
+                            priceLossColor: Colors.green,
+                          ),
                         )
                         : const Center(child: Text('No data available')),
               ),
@@ -221,7 +228,7 @@ class _StockgraphState extends State<Stockgraph> {
                           backgroundColor: Colors.green,
                         ),
                         onPressed: () {
-                          if (buyPrice * buyAmount <= widget.budget) {
+                          if (buyPrice * (buyAmount * 1000) <= widget.budget) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('買進成功！')));
@@ -253,7 +260,7 @@ class _StockgraphState extends State<Stockgraph> {
                           backgroundColor: Colors.red,
                         ),
                         onPressed: () {
-                          if (buyPrice * buyAmount <= widget.budget) {
+                          if (buyPrice * (buyAmount * 1000) <= widget.budget) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('賣出成功！')));

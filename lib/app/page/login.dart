@@ -96,13 +96,33 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    dbFuture.then((db) => Userdb.insertUser(User(
-                          id: 1,
-                          name: userController.text,
-                          account: userController.text,
-                          password: passwordController.text)));
-                    dbFuture.then((db) => Userdb.getAllUsers());
+                  onTap: () async {
+                    final db = await dbFuture;
+                    await Userdb.insertUser(User(
+                      id: 1,
+                      name: userController.text,
+                      account: userController.text,
+                      password: passwordController.text,
+                    ));
+                    await Userdb.getAllUsers();
+
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text("註冊成功"),
+                          content: Text("您的帳號已成功註冊！\n現在你可以開始遊玩了！"),
+                          actions: [
+                            TextButton(
+                              child: Text("確定"),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(20),

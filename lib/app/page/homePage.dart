@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:stock_game/DB/UserDB.dart';
 import 'package:stock_game/app/page/stockGraph.dart';
 
-int budget = 100000;
+int budget = 1000000;
 String stockCode = '';
 DateTime startDateTime = DateTime(2023, 1, 1);
 DateTime endDateTime = DateTime(2023, 3, 1);
