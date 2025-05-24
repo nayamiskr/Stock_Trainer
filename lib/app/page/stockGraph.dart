@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 import 'package:stock_game/DB/StockDb.dart';
+import 'package:stock_game/app/page/homePage.dart';
 
 class Stockgraph extends StatefulWidget {
   const Stockgraph({
@@ -25,16 +26,37 @@ class Stockgraph extends StatefulWidget {
 class _StockgraphState extends State<Stockgraph> {
   List<CandleData> _candles = [];
   String stockCode = '';
+  String stockName = '';
   double buyPrice = 0;
   int buyAmount = 0;
+  late int budget;
   late DateTime _startDateTime;
   late DateTime _endDateTime;
 
   @override
   void initState() {
     super.initState();
+    budget = widget.budget;
     _startDateTime = widget.startDT.subtract(Duration(days: 30));
     _endDateTime = widget.startDT;
+  }
+
+  Future<void> getStockName(String code) async {
+    final url = Uri.parse('https://openapi.twse.com.tw/v1/opendata/t187ap03_L');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      for (var item in data) {
+        if (item['公司代號'] == code.substring(0, 4)) {
+          stockName = item['公司簡稱'];
+          print(item['公司名稱']);
+          return;
+        }
+      }
+      stockName = stockCode.toUpperCase(); // 如果找不到，則使用輸入的股票代碼
+    }
   }
 
   Future<void> fetchStockData(String symbol) async {
@@ -45,6 +67,7 @@ class _StockgraphState extends State<Stockgraph> {
     );
 
     final response = await http.get(url);
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final result = data['chart']['result'][0];
@@ -98,7 +121,7 @@ class _StockgraphState extends State<Stockgraph> {
                 ),
                 children: [
                   TextSpan(
-                    text: '${widget.budget}',
+                    text: '${budget}',
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.w900,
@@ -130,6 +153,7 @@ class _StockgraphState extends State<Stockgraph> {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (stockCode.isNotEmpty) {
+                        await getStockName(stockCode);
                         await fetchStockData(stockCode);
                       }
                     },
@@ -144,7 +168,7 @@ class _StockgraphState extends State<Stockgraph> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Text(
-                  'Stock Code: ${stockCode}',
+                  '股票名稱: ${stockName}',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -228,7 +252,7 @@ class _StockgraphState extends State<Stockgraph> {
                           backgroundColor: Colors.green,
                         ),
                         onPressed: () {
-                          if (buyPrice * (buyAmount * 1000) <= widget.budget) {
+                          if (buyPrice * (buyAmount * 1000) <= budget) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('買進成功！')));
@@ -239,7 +263,10 @@ class _StockgraphState extends State<Stockgraph> {
                                 price: buyPrice,
                                 amount: buyAmount,
                               ),
-                            );
+                            );// 更新股票資料庫
+                            setState(() {
+                              budget -= (buyPrice * (buyAmount * 1000)).toInt();
+                            });
                           } else {
                             ScaffoldMessenger.of(
                               context,
@@ -260,7 +287,7 @@ class _StockgraphState extends State<Stockgraph> {
                           backgroundColor: Colors.red,
                         ),
                         onPressed: () {
-                          if (buyPrice * (buyAmount * 1000) <= widget.budget) {
+                          if (buyPrice * (buyAmount * 1000) <= budget) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('賣出成功！')));
