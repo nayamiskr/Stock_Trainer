@@ -31,7 +31,7 @@ class StockDb {
           'userId TEXT, '
           'price REAL, '
           'amount INTEGER, '
-          'FOREIGN KEY(userId) REFERENCES user(id))'
+          'FOREIGN KEY(userId) REFERENCES user(id))',
         );
       },
       version: 1,
@@ -46,26 +46,32 @@ class StockDb {
 
   static Future<void> insertStock(Stock stock) async {
     final db = await getDbConnect();
-    await db.insert(
-      'stock',
-      {
-        'code': stock.code,
-        'userId': stock.userId,
-        'price': stock.price,
-        'amount': stock.amount,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('stock', {
+      'code': stock.code,
+      'userId': stock.userId,
+      'price': stock.price,
+      'amount': stock.amount,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  static Future<void> getAllStocks(int userId) async {
+  static Future<List<Stock>> getAllStocks(int userId) async {
     final db = await getDbConnect();
     final List<Map<String, dynamic>> stocks = await db.query(
       'stock',
+      where: 'userId = ?',
+      whereArgs: [userId],
     );
 
-    for (var stock in stocks) {
-      print('OrderId: ${stock['orderId']}, Code: ${stock['code']}, UserId: ${stock['userId']}, Price: ${stock['price']}, Amount: ${stock['amount']}');
-    }
+    return stocks
+        .map(
+          (stock) => Stock(
+            orderId: int.parse(stock['orderId'].toString()),
+            code: stock['code'].toString(),
+            userId: int.parse(stock['userId'].toString()),
+            price: double.parse(stock['price'].toString()),
+            amount: int.parse(stock['amount'].toString()),
+          ),
+        )
+        .toList();
   }
 }

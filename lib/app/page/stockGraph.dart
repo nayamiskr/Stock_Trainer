@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 import 'package:stock_game/DB/StockDb.dart';
-import 'package:stock_game/app/page/homePage.dart';
+import 'package:stock_game/app/page/summaryPage.dart';
 
 class Stockgraph extends StatefulWidget {
   const Stockgraph({
@@ -51,7 +51,6 @@ class _StockgraphState extends State<Stockgraph> {
       for (var item in data) {
         if (item['公司代號'] == code.substring(0, 4)) {
           stockName = item['公司簡稱'];
-          print(item['公司名稱']);
           return;
         }
       }
@@ -107,6 +106,23 @@ class _StockgraphState extends State<Stockgraph> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('股票買賣'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list_alt),
+            tooltip: '已購股票',
+            onPressed: () async {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SummaryPage(userId: widget.userId),
+                ),
+              );
+            }
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -258,7 +274,7 @@ class _StockgraphState extends State<Stockgraph> {
                             ).showSnackBar(SnackBar(content: Text('買進成功！')));
                             StockDb.insertStock(
                               Stock(
-                                code: stockCode,
+                                code: stockCode.toUpperCase(),
                                 userId: widget.userId,
                                 price: buyPrice,
                                 amount: buyAmount,
