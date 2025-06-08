@@ -7,9 +7,9 @@ import 'app/page/login.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await deleteDatabase(join(await getDatabasesPath(), 'stock.db'));
-  await Userdb.initDB();
+  await deleteDatabase(join(await getDatabasesPath(), 'user.db'));
   await Userdb.getAllUsers();
-  print("hello");
+  print("hellooo");
   runApp(const MyApp());
 }
 

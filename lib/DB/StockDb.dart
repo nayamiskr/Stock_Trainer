@@ -7,6 +7,7 @@ class Stock {
   final int userId;
   final double price;
   final int amount;
+  final double nowPrice;
 
   Stock({
     this.orderId,
@@ -14,6 +15,7 @@ class Stock {
     required this.userId,
     required this.price,
     required this.amount,
+    required this.nowPrice,
   });
 }
 
@@ -28,9 +30,10 @@ class StockDb {
           'CREATE TABLE stock('
           'orderId INTEGER PRIMARY KEY AUTOINCREMENT, '
           'code TEXT, '
-          'userId TEXT, '
+          'userId INTEGER, '
           'price REAL, '
           'amount INTEGER, '
+          'nowPrice REAL, '
           'FOREIGN KEY(userId) REFERENCES user(id))',
         );
       },
@@ -51,7 +54,71 @@ class StockDb {
       'userId': stock.userId,
       'price': stock.price,
       'amount': stock.amount,
+      'nowPrice': stock.nowPrice,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  static Future<void> updateNowPrice(
+    String code,
+    int userId,
+    double nowPrice,
+  ) async {
+    final db = await getDbConnect();
+    await db.update(
+      'stock',
+      {'nowPrice': nowPrice},
+      where: 'code = ? AND userId = ?',
+      whereArgs: [code, userId],
+    );
+  }
+
+  static Future<void> deleteStock(int orderId) async {
+    final db = await getDbConnect();
+    await db.delete('stock', where: 'orderId = ?', whereArgs: [orderId]);
+  }
+
+  static Future<void> updateOrInsertStock({
+    required String code,
+    required int userId,
+    required double price,
+    required int amount,
+    required double nowPrice,
+  }) async {
+    final db = await getDbConnect();
+    final List<Map<String, dynamic>> existing = await db.query(
+      'stock',
+      where: 'code = ? AND userId = ?',
+      whereArgs: [code, userId],
+    );
+
+    if (existing.isNotEmpty) {
+      final current = existing.first;
+      final int currentAmount = current['amount'];
+      final double currentPrice = current['price'];
+      final int orderId = current['orderId'];
+
+      final int newAmount = currentAmount + amount;
+      final double newTotalCost =
+          (currentAmount * currentPrice) + (amount * price);
+      final double averagePrice = newTotalCost / newAmount;
+
+      await db.update(
+        'stock',
+        {'amount': newAmount, 'price': averagePrice, 'nowPrice': nowPrice},
+        where: 'orderId = ?',
+        whereArgs: [orderId],
+      );
+    } else {
+      await insertStock(
+        Stock(
+          code: code,
+          userId: userId,
+          price: price,
+          amount: amount,
+          nowPrice: nowPrice,
+        ),
+      );
+    }
   }
 
   static Future<List<Stock>> getAllStocks(int userId) async {
@@ -70,6 +137,7 @@ class StockDb {
             userId: int.parse(stock['userId'].toString()),
             price: double.parse(stock['price'].toString()),
             amount: int.parse(stock['amount'].toString()),
+            nowPrice: double.parse(stock['nowPrice'].toString()),
           ),
         )
         .toList();

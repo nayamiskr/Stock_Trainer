@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 import 'package:stock_game/DB/StockDb.dart';
+import 'package:stock_game/DB/UserDB.dart';
 import 'package:stock_game/app/page/summaryPage.dart';
 
 class Stockgraph extends StatefulWidget {
@@ -10,14 +11,12 @@ class Stockgraph extends StatefulWidget {
     super.key,
     required this.startDT,
     required this.endDT,
-    required this.budget,
-    required this.userId,
+    required this.user,
   });
 
   final DateTime startDT;
   final DateTime endDT;
-  final int budget;
-  final int userId;
+  final User user;
 
   @override
   State<Stockgraph> createState() => _StockgraphState();
@@ -29,6 +28,7 @@ class _StockgraphState extends State<Stockgraph> {
   String stockName = '';
   double buyPrice = 0;
   int buyAmount = 0;
+  double nowPrice = 0;
   late int budget;
   late DateTime _startDateTime;
   late DateTime _endDateTime;
@@ -36,7 +36,7 @@ class _StockgraphState extends State<Stockgraph> {
   @override
   void initState() {
     super.initState();
-    budget = widget.budget;
+    budget = widget.user.balance;
     _startDateTime = widget.startDT.subtract(Duration(days: 30));
     _endDateTime = widget.startDT;
   }
@@ -55,6 +55,32 @@ class _StockgraphState extends State<Stockgraph> {
         }
       }
       stockName = stockCode.toUpperCase(); // 如果找不到，則使用輸入的股票代碼
+    }
+  }
+
+  Future<void> updateStockNowPrice() async {
+    final stocks = await StockDb.getAllStocks(widget.user.id);
+    for (final stock in stocks) {
+      final code = stock.code;
+      final now = DateTime.now();
+      final oneMonthAgo = now.subtract(Duration(days: 30));
+      final endTimestamp = _endDateTime.millisecondsSinceEpoch ~/ 1000;
+      final startTimestamp = endTimestamp - (30 * 24 * 60 * 60); // 30天前的時間
+      final url = Uri.parse(
+        'https://query1.finance.yahoo.com/v8/finance/chart/$code?interval=1d&period1=$startTimestamp&period2=$endTimestamp&events=history&includeAdjustedClose=true',
+      );
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final result = data['chart']['result'][0];
+        final closes = result['indicators']['quote'][0]['close'];
+        final closePrice = closes.last?.toDouble() ?? 0;
+
+        print(closePrice);
+
+        await StockDb.updateNowPrice(code, widget.user.id, closePrice);
+      }
     }
   }
 
@@ -78,6 +104,7 @@ class _StockgraphState extends State<Stockgraph> {
       final lows = indicators['low'];
       final closes = indicators['close'];
       final volumes = indicators['volume'];
+      nowPrice = closes.isNotEmpty ? closes.last.toDouble() : 0;
 
       List<CandleData> candles = [];
       for (int i = 0; i < timestamps.length; i++) {
@@ -108,6 +135,7 @@ class _StockgraphState extends State<Stockgraph> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('股票買賣'),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.list_alt),
@@ -116,10 +144,14 @@ class _StockgraphState extends State<Stockgraph> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SummaryPage(userId: widget.userId),
+                  builder:
+                      (context) => SummaryPage(
+                        userId: widget.user.id,
+                        nowPrice: nowPrice,
+                      ),
                 ),
               );
-            }
+            },
           ),
         ],
       ),
@@ -137,7 +169,7 @@ class _StockgraphState extends State<Stockgraph> {
                 ),
                 children: [
                   TextSpan(
-                    text: '${budget}',
+                    text: '${budget} ',
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.w900,
@@ -197,6 +229,7 @@ class _StockgraphState extends State<Stockgraph> {
                       _endDateTime = _endDateTime.add(Duration(days: 1));
                       _startDateTime = _startDateTime.add(Duration(days: 1));
                     });
+                    await updateStockNowPrice();
                     await fetchStockData(stockCode);
                   },
                 ),
@@ -267,26 +300,37 @@ class _StockgraphState extends State<Stockgraph> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
-                        onPressed: () {
-                          if (buyPrice * (buyAmount * 1000) <= budget) {
+                        onPressed: () async {
+                          if (buyPrice * (buyAmount * 1000) <= widget.user.balance && 
+                              buyPrice >= nowPrice) {
                             ScaffoldMessenger.of(
                               context,
-                            ).showSnackBar(SnackBar(content: Text('買進成功！')));
-                            StockDb.insertStock(
-                              Stock(
-                                code: stockCode.toUpperCase(),
-                                userId: widget.userId,
-                                price: buyPrice,
-                                amount: buyAmount,
-                              ),
-                            );// 更新股票資料庫
+                            ).showSnackBar(SnackBar(content: Text('成交！')));
+                            StockDb.updateOrInsertStock(
+                              code: stockCode.toUpperCase(),
+                              userId: widget.user.id,
+                              price: buyPrice,
+                              amount: buyAmount,
+                              nowPrice: nowPrice,
+                            ); // 更新股票資料庫
+
+                            await Userdb.updateUserBalance(
+                                widget.user.id,
+                                (buyPrice * (buyAmount * 1000)).toInt(),
+                                false,
+                              ); 
+                            
+                            final newbudget = await Userdb.getUserBalance(widget.user.id);
+
                             setState(() {
-                              budget -= (buyPrice * (buyAmount * 1000)).toInt();
+                              // 更新用戶餘額
+                              budget = newbudget;
+                              print(budget);
                             });
                           } else {
                             ScaffoldMessenger.of(
                               context,
-                            ).showSnackBar(SnackBar(content: Text('超過預算！')));
+                            ).showSnackBar(SnackBar(content: Text('成交失敗！')));
                           }
                         },
                         child: Text(
@@ -303,15 +347,16 @@ class _StockgraphState extends State<Stockgraph> {
                           backgroundColor: Colors.red,
                         ),
                         onPressed: () {
-                          if (buyPrice * (buyAmount * 1000) <= budget) {
+                          if (buyPrice * (buyAmount * 1000) <= budget &&
+                              buyPrice <= nowPrice) {
                             ScaffoldMessenger.of(
                               context,
-                            ).showSnackBar(SnackBar(content: Text('賣出成功！')));
-                            StockDb.getAllStocks(widget.userId);
+                            ).showSnackBar(SnackBar(content: Text('成交！')));
+                             // 假設有一個orderId為1的股票
                           } else {
                             ScaffoldMessenger.of(
                               context,
-                            ).showSnackBar(SnackBar(content: Text('超過預算！')));
+                            ).showSnackBar(SnackBar(content: Text('成交失敗！')));
                           }
                         },
                         child: Text(

@@ -6,19 +6,36 @@ import 'package:intl/intl.dart';
 import 'package:stock_game/DB/UserDB.dart';
 import 'package:stock_game/app/page/stockGraph.dart';
 
-int budget = 1000000;
 String stockCode = '';
 DateTime startDateTime = DateTime(2023, 1, 1);
 DateTime endDateTime = DateTime(2023, 3, 1);
+// await deleteDatabase(join(await getDatabasesPath(), 'stock.db'));
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key, required this.currentUser});
   final User currentUser;
+
   @override
   State<Homepage> createState() => _HomepageState();
 }
 
+int currentBalance = 0;
+
 class _HomepageState extends State<Homepage> {
+  @override
+  void initState() {
+    Userdb.getAllUsers();
+    super.initState();
+    _loadUserBalance();
+  }
+
+  Future<void> _loadUserBalance() async {
+    final balance = await Userdb.getUserBalance(widget.currentUser.id);
+    setState(() {
+      currentBalance = balance;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -50,7 +67,7 @@ class _HomepageState extends State<Homepage> {
                         ),
                       ),
                       Text(
-                        "\$1000000",
+                        "$currentBalance ",
                         style: TextStyle(fontSize: 24, color: Colors.green),
                       ),
                     ],
@@ -118,21 +135,34 @@ class _HomepageState extends State<Homepage> {
                       ),
                     ),
                   ],
-
-                  
                 ),
               ),
-              
+
               //start button
               SizedBox(
                 height: 50,
                 width: 200,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final result = await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Stockgraph(startDT: startDateTime, endDT: endDateTime, budget: budget, userId: widget.currentUser.id)),
+                      MaterialPageRoute(
+                        builder:
+                            (context) => Stockgraph(
+                              startDT: startDateTime,
+                              endDT: endDateTime,
+                              user: widget.currentUser,
+                            ),
+                      ),
                     );
+                    if (result == true) {
+                      final newBalance = await Userdb.getUserBalance(
+                        widget.currentUser.id,
+                      );
+                      setState(() {
+                        currentBalance = newBalance; // 你要顯示的變數
+                      });
+                    }
                   },
                   child: Text('開始遊戲', style: TextStyle(fontSize: 20)),
                 ),

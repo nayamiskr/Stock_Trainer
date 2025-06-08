@@ -24,6 +24,7 @@ class LoginPage extends StatelessWidget {
         name: user['name'],
         account: user['account'],
         password: user['password'],
+        balance: user['balance'],
       );
     }
     return null;
@@ -103,6 +104,7 @@ class LoginPage extends StatelessWidget {
                       name: userController.text,
                       account: userController.text,
                       password: passwordController.text,
+                      balance: 1500000,
                     ));
                     await Userdb.getAllUsers();
 
