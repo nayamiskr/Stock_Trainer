@@ -29,6 +29,7 @@ class _StockgraphState extends State<Stockgraph> {
   double buyPrice = 0;
   int buyAmount = 0;
   double nowPrice = 0;
+  double lowPrice = 0;
   double highPrice = 0;
   late int budget;
   late DateTime _startDateTime;
@@ -109,6 +110,7 @@ class _StockgraphState extends State<Stockgraph> {
       final volumes = indicators['volume'];
       nowPrice = closes.isNotEmpty ? closes.last.toDouble() : 0;
       highPrice = highs.isNotEmpty ? highs.last.toDouble() : 0;
+      lowPrice = lows.isNotEmpty ? lows.last.toDouble() : 0;
 
       List<CandleData> candles = [];
       // K線圖資料
@@ -310,7 +312,7 @@ class _StockgraphState extends State<Stockgraph> {
                         onPressed: () async {
                           //判斷金額跟價格的合理性
                           if (buyPrice * (buyAmount * 1000) <= widget.user.balance && 
-                              buyPrice >= nowPrice && buyPrice < highPrice) {
+                              buyPrice >= lowPrice && buyPrice <= highPrice) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('成交！')));
