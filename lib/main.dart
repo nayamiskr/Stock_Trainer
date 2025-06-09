@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:stock_game/DB/UserDB.dart';
 import 'app/page/login.dart';
 
 void main() async {

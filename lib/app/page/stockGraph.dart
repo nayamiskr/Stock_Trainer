@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 import 'package:stock_game/DB/StockDb.dart';
 import 'package:stock_game/DB/UserDB.dart';
+import 'package:stock_game/app/page/endPage.dart';
 import 'package:stock_game/app/page/summaryPage.dart';
 
 class Stockgraph extends StatefulWidget {
@@ -79,8 +80,6 @@ class _StockgraphState extends State<Stockgraph> {
         final closes = result['indicators']['quote'][0]['close'];
         final closePrice = closes.last?.toDouble() ?? 0;
 
-        print(closePrice);
-
         await StockDb.updateNowPrice(code, widget.user.id, closePrice);
       }
     }
@@ -149,13 +148,15 @@ class _StockgraphState extends State<Stockgraph> {
             icon: const Icon(Icons.list_alt),
             tooltip: '已購股票',
             onPressed: () async {
+              print("hello\n\n\n");
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder:
                       (context) => SummaryPage(
-                        userId: widget.user.id,
+                        user: widget.user,
                         nowPrice: nowPrice,
+                        capital: budget,
                       ),
                 ),
               );
@@ -238,6 +239,16 @@ class _StockgraphState extends State<Stockgraph> {
                       _endDateTime = _endDateTime.add(Duration(days: 1));
                       _startDateTime = _startDateTime.add(Duration(days: 1));
                     });
+                    if (_endDateTime.isAfter(widget.endDT)) {
+                      int total = budget + (await StockDb.getUserTotalPrice(widget.user.id)).toInt() - widget.user.balance;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Endpage(total: total, user: widget.user,)
+                        ),
+                      );
+                      return;
+                    }
                     await updateStockNowPrice();
                     await fetchStockData(stockCode);
                   },
@@ -311,8 +322,7 @@ class _StockgraphState extends State<Stockgraph> {
                         ),
                         onPressed: () async {
                           //判斷金額跟價格的合理性
-                          if (buyPrice * (buyAmount * 1000) <= widget.user.balance && 
-                              buyPrice >= lowPrice && buyPrice <= highPrice) {
+                          if (buyPrice * (buyAmount * 1000) <= widget.user.balance && buyPrice >= lowPrice && buyPrice <= highPrice) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('成交！')));
@@ -337,7 +347,6 @@ class _StockgraphState extends State<Stockgraph> {
                             setState(() {
                               // 更新用戶餘額
                               budget = newbudget;
-                              print(budget);
                             });
                           } else {
                             ScaffoldMessenger.of(
@@ -358,12 +367,33 @@ class _StockgraphState extends State<Stockgraph> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                         ),
-                        onPressed: () {
-                          if (buyPrice * (buyAmount * 1000) <= budget &&
-                              buyPrice <= nowPrice) {
-                            ScaffoldMessenger.of(
+                        onPressed: () async {
+                          if (buyPrice >= lowPrice && buyPrice <= highPrice){
+                            try {
+                              await StockDb.deleteStock(
+                                stockCode.toUpperCase(),
+                                buyAmount,
+                              );
+                              ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('成交！')));
+                              // 更新使用者餘額
+                              await Userdb.updateUserBalance(
+                                widget.user.id,
+                                (buyPrice * (buyAmount * 1000)).toInt(),
+                                true,
+                              );
+                              final newbudget = await Userdb.getUserBalance(widget.user.id);
+                              setState(() {
+                                // 更新用戶餘額
+                                budget = newbudget;
+                              });
+                            } catch (e) {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text('您未持有足夠的股票！')));
+                              return;
+                            }
                              // 假設有一個orderId為1的股票
                           } else {
                             ScaffoldMessenger.of(

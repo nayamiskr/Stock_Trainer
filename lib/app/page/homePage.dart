@@ -30,7 +30,7 @@ class _HomepageState extends State<Homepage> {
   }
 
   Future<void> _loadUserBalance() async {
-    final balance = await Userdb.getUserBalance(widget.currentUser.id);
+    final balance = widget.currentUser.balance;
     setState(() {
       currentBalance = balance;
     });

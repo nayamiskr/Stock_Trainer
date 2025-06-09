@@ -86,6 +86,18 @@ class Userdb {
     }
   }
 
+  static Future<void> updateUser(int userId, int balance) async {
+    final db = await getDbConnect();
+    await db.update(
+      'user',
+      {
+        'balance': balance,
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
   static Future<void> getAllUsers() async {
     final db = await getDbConnect();
     final List<Map<String, dynamic>> users = await db.query('user');

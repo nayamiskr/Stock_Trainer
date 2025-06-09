@@ -43,7 +43,9 @@ class StockDb {
   }
 
   static Future<Database> getDbConnect() async {
-    if (_database != null) return _database!;
+    if (_database != null && _database!.isOpen) {
+      return _database!;
+    }
     return await initDB();
   }
 
@@ -72,9 +74,65 @@ class StockDb {
     );
   }
 
-  static Future<void> deleteStock(int orderId) async {
+  static Future<void> deleteStock(String code, int amount) async {
     final db = await getDbConnect();
-    await db.delete('stock', where: 'orderId = ?', whereArgs: [orderId]);
+    final List<Map<String, dynamic>> order = await db.query(
+      'stock',
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+
+    if (order.isEmpty) {
+      throw Exception('No stock found with code $code');
+    }
+    final int orderAmount = order.first['amount'];
+    if (orderAmount < amount) {
+      throw Exception('Insufficient stock amount to delete');
+    }
+    if (orderAmount > amount) {
+      await db.update(
+        'stock',
+        {'amount': orderAmount - amount},
+        where: 'code = ?',
+        whereArgs: [code],
+      );
+    } else {
+      await db.delete('stock', where: 'code = ?', whereArgs: [code]);
+    }
+  }
+
+  static Future<int> getUserTotalPrice(int userId) async {
+    final db = await getDbConnect();
+    final List<Map<String, dynamic>> stocks = await db.query(
+      'stock',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
+
+    double total = 0.0;
+    for (var stock in stocks) {
+      int amount = int.parse(stock['amount'].toString());
+      double nowPrice = double.parse(stock['nowPrice'].toString());
+      total += amount * nowPrice * 1000; // 假設每股價格是以千分之一計算
+    }
+
+    return total.toInt();
+  }
+
+  static Future<int> cleanData(int userId) async {
+    final db = await getDbConnect();
+    final List<Map<String, dynamic>> stocks = await db.query(
+      'stock',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
+
+    double total = 0.0;
+    for (var stock in stocks) {
+      await db.delete('stock', where: 'code = ?', whereArgs: [stock['code']]);
+    }
+
+    return total.toInt();
   }
 
   static Future<void> updateOrInsertStock({

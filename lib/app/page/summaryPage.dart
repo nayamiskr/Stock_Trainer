@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:stock_game/DB/StockDb.dart';
+import 'package:stock_game/DB/UserDB.dart';
+import 'package:stock_game/app/page/endPage.dart';
 
 class SummaryPage extends StatelessWidget {
-  final int userId;
+  final User user;
   final double nowPrice;
-  const SummaryPage({super.key, required this.userId, required this.nowPrice});
+  final int capital;
+  const SummaryPage({super.key, required this.user, required this.nowPrice, required this.capital});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("股票倉儲"), centerTitle: true),
       body: FutureBuilder<List<Stock>>(
-        future: StockDb.getAllStocks(userId),
+        future: StockDb.getAllStocks(user.id),
         //先獲取所有股票資料
         builder: (context, snapshot) {
           double profit = 0.0;
@@ -25,12 +28,10 @@ class SummaryPage extends StatelessWidget {
 
             cost += stockCost;
             profit += stockProfit;
-            print(
-                "股票代碼：${stock.code}, 張數：${stock.amount}, 成本：$stockCost, 利潤：$stockProfit");
           }
 
           double ROI = cost == 0 ? 0 : (profit / cost) * 100;
-          
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
@@ -98,6 +99,32 @@ class SummaryPage extends StatelessWidget {
                           ),
                         );
                       },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                        textStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: Colors.white,
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                      onPressed: () async {
+                        int total = capital + (await StockDb.getUserTotalPrice(user.id)).toInt();
+                            profit.toInt();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => Endpage(total: total - user.balance, user: user),
+                          ),
+                        );
+                      },
+                      child: Text("結束"),
                     ),
                   ),
                 ],
