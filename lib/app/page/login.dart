@@ -14,9 +14,10 @@ class LoginPage extends StatelessWidget {
     final db = await dbFuture;
     final List<Map<String, dynamic>> userData = await db.query(
       'user',
-      where: 'account = ? AND password = ?',
+      where: 'account = ? AND password = ?',//SQL語句，查詢帳號和密碼
       whereArgs: [account, password],
     );
+    //假設userData有資料 回傳使用者資料
     if (userData.isNotEmpty) {
       final user = userData.first;
       return User(
@@ -98,13 +99,12 @@ class LoginPage extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () async {
-                    final db = await dbFuture;
                     await Userdb.insertUser(User(
                       id: 1,
                       name: userController.text,
                       account: userController.text,
                       password: passwordController.text,
-                      balance: 1500000,
+                      balance: 15000000,
                     ));
                     await Userdb.getAllUsers();
 

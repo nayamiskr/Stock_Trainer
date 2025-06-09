@@ -29,6 +29,7 @@ class _StockgraphState extends State<Stockgraph> {
   double buyPrice = 0;
   int buyAmount = 0;
   double nowPrice = 0;
+  double highPrice = 0;
   late int budget;
   late DateTime _startDateTime;
   late DateTime _endDateTime;
@@ -41,6 +42,7 @@ class _StockgraphState extends State<Stockgraph> {
     _endDateTime = widget.startDT;
   }
 
+  //取得公司名稱
   Future<void> getStockName(String code) async {
     final url = Uri.parse('https://openapi.twse.com.tw/v1/opendata/t187ap03_L');
 
@@ -58,12 +60,11 @@ class _StockgraphState extends State<Stockgraph> {
     }
   }
 
+  //更新股票的即時價格
   Future<void> updateStockNowPrice() async {
     final stocks = await StockDb.getAllStocks(widget.user.id);
     for (final stock in stocks) {
       final code = stock.code;
-      final now = DateTime.now();
-      final oneMonthAgo = now.subtract(Duration(days: 30));
       final endTimestamp = _endDateTime.millisecondsSinceEpoch ~/ 1000;
       final startTimestamp = endTimestamp - (30 * 24 * 60 * 60); // 30天前的時間
       final url = Uri.parse(
@@ -84,6 +85,7 @@ class _StockgraphState extends State<Stockgraph> {
     }
   }
 
+  //取得股票資料
   Future<void> fetchStockData(String symbol) async {
     final startTimestamp = _startDateTime.millisecondsSinceEpoch ~/ 1000;
     final endTimestamp = _endDateTime.millisecondsSinceEpoch ~/ 1000;
@@ -94,6 +96,7 @@ class _StockgraphState extends State<Stockgraph> {
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
+      // 解析回傳的JSON資料
       final data = jsonDecode(response.body);
       final result = data['chart']['result'][0];
       final timestamps = result['timestamp'];
@@ -105,12 +108,15 @@ class _StockgraphState extends State<Stockgraph> {
       final closes = indicators['close'];
       final volumes = indicators['volume'];
       nowPrice = closes.isNotEmpty ? closes.last.toDouble() : 0;
+      highPrice = highs.isNotEmpty ? highs.last.toDouble() : 0;
 
       List<CandleData> candles = [];
+      // K線圖資料
       for (int i = 0; i < timestamps.length; i++) {
         if ([opens[i], highs[i], lows[i], closes[i], volumes[i]].contains(null))
           continue;
-
+    
+        // 蠟燭圖資料
         candles.add(
           CandleData(
             timestamp: timestamps[i] * 1000,
@@ -211,7 +217,7 @@ class _StockgraphState extends State<Stockgraph> {
               ],
             ),
 
-            //顯示股票代碼跟調整日期
+            //顯示股票名稱跟調整日期
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -222,6 +228,7 @@ class _StockgraphState extends State<Stockgraph> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                //箭頭icon 每按一下就往後一天
                 IconButton(
                   icon: const Icon(Icons.arrow_forward_sharp),
                   onPressed: () async {
@@ -251,7 +258,7 @@ class _StockgraphState extends State<Stockgraph> {
                             priceLossColor: Colors.green,
                           ),
                         )
-                        : const Center(child: Text('No data available')),
+                        : const Center(child: Text('目前沒有資料 請搜尋')),
               ),
             ),
 
@@ -301,19 +308,22 @@ class _StockgraphState extends State<Stockgraph> {
                           backgroundColor: Colors.green,
                         ),
                         onPressed: () async {
+                          //判斷金額跟價格的合理性
                           if (buyPrice * (buyAmount * 1000) <= widget.user.balance && 
-                              buyPrice >= nowPrice) {
+                              buyPrice >= nowPrice && buyPrice < highPrice) {
                             ScaffoldMessenger.of(
                               context,
                             ).showSnackBar(SnackBar(content: Text('成交！')));
+                            //當成交就會新增資料庫
                             StockDb.updateOrInsertStock(
                               code: stockCode.toUpperCase(),
                               userId: widget.user.id,
                               price: buyPrice,
                               amount: buyAmount,
                               nowPrice: nowPrice,
-                            ); // 更新股票資料庫
+                            ); 
 
+                            // 更新使用者餘額
                             await Userdb.updateUserBalance(
                                 widget.user.id,
                                 (buyPrice * (buyAmount * 1000)).toInt(),

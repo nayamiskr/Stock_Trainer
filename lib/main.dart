@@ -8,8 +8,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await deleteDatabase(join(await getDatabasesPath(), 'stock.db'));
   await deleteDatabase(join(await getDatabasesPath(), 'user.db'));
-  await Userdb.getAllUsers();
-  print("hellooo");
   runApp(const MyApp());
 }
 

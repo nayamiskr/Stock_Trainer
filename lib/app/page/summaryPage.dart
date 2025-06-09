@@ -12,10 +12,12 @@ class SummaryPage extends StatelessWidget {
       appBar: AppBar(title: Text("股票倉儲"), centerTitle: true),
       body: FutureBuilder<List<Stock>>(
         future: StockDb.getAllStocks(userId),
+        //先獲取所有股票資料
         builder: (context, snapshot) {
           double profit = 0.0;
           double cost = 0.0; // ← 加上成本總和
 
+          // 計算總成本和總利潤
           for (final stock in snapshot.data ?? []) {
             final stockCost = stock.price * stock.amount * 1000;
             final stockProfit =
@@ -80,7 +82,6 @@ class SummaryPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Example: Display stock names
                   Expanded(
                     child: ListView.builder(
                       itemCount: stocks.length,
@@ -90,7 +91,7 @@ class SummaryPage extends StatelessWidget {
                           leading: Icon(Icons.trending_up),
                           title: Text("股票代碼：${stock.code}"),
                           subtitle: Text(
-                            "張數：${stock.amount} | 目前單價：\$${stock.nowPrice.toStringAsFixed(2)} \n| 原價：\$${stock.price.toStringAsFixed(2)}",
+                            "張數：${stock.amount} | 目前單價：\$${stock.nowPrice.toStringAsFixed(2)} \n| 成本：\$${stock.price.toStringAsFixed(2)}",
                           ),
                           trailing: Text(
                             "總價：\$${(stock.amount * 1000 * stock.price).toStringAsFixed(2)}",
